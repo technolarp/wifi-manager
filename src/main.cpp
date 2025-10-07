@@ -151,7 +151,11 @@ void loop()
     leds[indexLed] = CRGB::Red; 
     FastLED.show();
 
-    Serial.println(".");
+    Serial.print(".");
+    if (indexLed == 0)
+    {
+      Serial.println(".");
+    }    
   }
 
 }
