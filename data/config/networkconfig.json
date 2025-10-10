@@ -1,0 +1,7 @@
+{
+"wifi_client":[["HOULALA_1","tototutu",1],["","pipololo",1],["MYDEBUG","aqwzsx789*",1],["HOULALA_4","azerty123",0],["","",0]],
+"apName":"VUMETRE_1",
+"apPassword": "",
+"apIP":[192,168,1,1],
+"apNetMsk": [255,255,255,0]
+}
