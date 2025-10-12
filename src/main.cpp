@@ -294,7 +294,7 @@ void mountFS()
                 SIZE_ARRAY);
       }
 
-      if (doc["wifiConnectDelay"].is<JsonVariant>())
+      if (doc["wifiConnectDelay"].is<unsigned short>())
       {
         wifiConnectDelay=doc["wifiConnectDelay"];
       }
@@ -309,7 +309,7 @@ void mountFS()
           {
             strlcpy(ssid[i], wifiClientArray[i]["ssid"], SIZE_ARRAY);
             strlcpy(password[i], wifiClientArray[i]["password"], SIZE_ARRAY);
-            active[i]= wifiClientArray[i]["active"];
+            active[i]= wifiClientArray[i]["active"].as<boolean>();
           }
         }
         wifiClientArray.clear();
