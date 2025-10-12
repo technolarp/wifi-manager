@@ -300,11 +300,9 @@ void mountFS()
         wifiConnectDelay=doc["wifiConnectDelay"];
       }
 
-      if (doc["wifi_clients"].is<JsonVariant>())
+      if (doc["wifiClientsList"].is<JsonVariant>())
       {
-        JsonArray wifiClientArray = doc["wifi_clients"];
-        // serializeJson(wifiClientArray, Serial);
-        // Serial.println("");
+        JsonArray wifiClientArray = doc["wifiClientsList"];
 
         for (uint8_t i = 0; i < WIFI_CLIENTS; i++)
         {
@@ -312,21 +310,14 @@ void mountFS()
           {
             strlcpy(ssid[i], wifiClientArray[i]["ssid"], SIZE_ARRAY);
             strlcpy(password[i], wifiClientArray[i]["password"], SIZE_ARRAY);
-            // copyArray(wifiClientArray[i]["ssid"], ssid[i]);
-            // copyArray(wifiClientArray[i]["password"], password[i]);
             active[i]= wifiClientArray[i]["active"];
-            
-            // serializeJson(wifiClientArray[i]["ssid"] , Serial);
-            // Serial.println("");
           }
         }
-
         wifiClientArray.clear();
       }
     }
-
     doc.clear();
 
-    // Close the file (File's destructor doesn't close the file)
+    // Close the file
     file.close();
   }

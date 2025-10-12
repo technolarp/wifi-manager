@@ -1,5 +1,5 @@
 {
-"wifi_clients":[
+"wifiClientsList":[
     {"ssid":"SSID_1","password":"password1","active":1},
     {"ssid":"SSID_2","password":"password2","active":1},
     {"ssid":"SSID_3","password":"password3","active":0},
