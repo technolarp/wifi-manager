@@ -3,13 +3,6 @@
 2/
 */
 
-/*
-A FAIRE
-5 => WIFI_CLIENTS
-creer le wifi AP
-voir pour tableau objet json
-*/
-
 #include <Arduino.h>
 #include <IPAddress.h>
 
@@ -25,13 +18,11 @@ IPAddress apNetMsk;
 char apName[SIZE_ARRAY];
 char apPassword[SIZE_ARRAY];
 
+uint8_t wifiConnectDelay = 5;
+
 char ssid[WIFI_CLIENTS][SIZE_ARRAY];
 char password[WIFI_CLIENTS][SIZE_ARRAY];
 bool active[WIFI_CLIENTS];
-
-char ssid2[WIFI_CLIENTS][SIZE_ARRAY];
-char password2[WIFI_CLIENTS][SIZE_ARRAY];
-bool active2[WIFI_CLIENTS];
 
 // ARDUINOJSON
 #include <ArduinoJson.h>
@@ -70,14 +61,11 @@ void setup()
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   FastLED.setBrightness(100);
 
-  // HEARTBEAT
-  previousMillisHB = millis();
-  intervalHB = 10 * 1000;
-
+  
   // READ WIFI CONFIG
   mountFS();
   listDir("/config");
-  //printJsonFile("/config/networkconfig.json");
+  printJsonFile("/config/networkconfig.json");
   readNetworkConfig("/config/networkconfig.json");
 
   // LOOP TO WIFI CLIENT
@@ -89,10 +77,6 @@ void setup()
   {
     Serial.print("ssid: ");
     Serial.println(ssid[i]);
-    // Serial.print(" pw: ");
-    // Serial.print(password[i]);
-    // Serial.print(" act: ");
-    // Serial.println(active[i]);
 
     if (active[i]==1 && strlen(ssid[i])>0)
     {
@@ -108,7 +92,7 @@ void setup()
           delay(100);
           Serial.print("/");
 
-          if (millis() - previousMillisHB > intervalHB)
+          if (millis() - previousMillisHB > (wifiConnectDelay*1000) )
           {
             previousMillisHB = millis();
             wifiFlag = false;
@@ -120,74 +104,28 @@ void setup()
       {
         Serial.print("connected to ");
         Serial.println(ssid[i]);
+        Serial.print("IP address: ");
+        Serial.println(WiFi.localIP());
       }
-    }
-    
+    }    
   }
   Serial.println(" ");
-  Serial.print("Connected! IP address: ");
-  Serial.println(WiFi.localIP());
   
-  
-  /*
-  
-
-  // WIFI CLIENT 1
-  
-
-  // Connecting to WiFi...
-  Serial.print("Connecting to ");
-  Serial.println(WIFI_SSID_1);
-  Serial.println(millis()/1000);
-  
-  Serial.println("");
-  Serial.println(millis()/1000);
-  Serial.println("--WIFI_SSID_1--");
-  Serial.println("");
-
-  // WIFI CLIENT 2
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    WiFi.disconnect(true);
-    WiFi.begin(WIFI_SSID_2, WIFI_PASS_2);
-
-    // Connecting to WiFi...
-    Serial.print("Connecting to ");
-    Serial.println(WIFI_SSID_2);
-    // Loop continuously while WiFi is not connected
-    while ( (WiFi.status() != WL_CONNECTED) && (WIFI_FLAG_2) )
-    {
-      delay(100);
-      Serial.print("/");
-
-      if (millis() - previousMillisHB > intervalHB)
-      {
-        previousMillisHB = millis();
-        WIFI_FLAG_2 = false;
-      }
-    }
-
-    Serial.println("");
-    Serial.println(millis()/1000);
-    Serial.println("--WIFI_SSID_2--");
-    Serial.println("");
-  }
-
-
-  Serial.println();
-  Serial.print("Connected! IP address: ");
-  Serial.println(WiFi.localIP());
-
-
   // WIFI AP MODE
   if (WiFi.status() != WL_CONNECTED)
   {
-    IPAddress apIP(10,20,30,1);
-    IPAddress apNetMsk(255,255,0,0);
+    Serial.print("failed to connect to wifi as client, creating a wifi AP: ");
+    Serial.println(apName);
+    // check apName correct
+    // check apPassword >= 8
+    // add check IP correcte sinon
+    // IPAddress apIP(10,20,30,1);
+    // IPAddress apNetMsk(255,255,0,0);
 
-    WiFi.mode(WIFI_AP_STA);
+    // WiFi.mode(WIFI_AP_STA);
+    WiFi.mode(WIFI_AP);
     WiFi.softAPConfig(apIP,apIP,apNetMsk);
-    bool apRC = WiFi.softAP("WIFI-TEST", "tototiti");
+    bool apRC = WiFi.softAP(apName, apPassword);
 
     if (apRC)
     {
@@ -202,7 +140,6 @@ void setup()
     Serial.print(F("softAPIP: "));
     Serial.println(WiFi.softAPIP());
   }
-  */
 
   // HEARTBEAT
   previousMillisHB = millis();
@@ -225,10 +162,13 @@ void loop()
     leds[indexLed] = CRGB::Red;
     FastLED.show();
 
-    Serial.print(".");
     if (indexLed == 0)
     {
       Serial.println(".");
+    }
+    else
+    {
+      Serial.print(".");
     }
   }
 }
@@ -294,7 +234,6 @@ void mountFS()
     Serial.println();
   }
 
-
   void readNetworkConfig(const char *filename)
   {
     // lire les données depuis le fichier littleFS
@@ -326,6 +265,8 @@ void mountFS()
         apIP[1] = apIPArray[1];
         apIP[2] = apIPArray[2];
         apIP[3] = apIPArray[3];
+
+        apIPArray.clear();
       }
 
       if (doc["apNetMsk"].is<JsonVariant>())
@@ -336,6 +277,8 @@ void mountFS()
         apNetMsk[1] = apNetMskArray[1];
         apNetMsk[2] = apNetMskArray[2];
         apNetMsk[3] = apNetMskArray[3];
+
+        apNetMskArray.clear();
       }
 
       if (doc["apName"].is<JsonVariant>())
@@ -352,50 +295,38 @@ void mountFS()
                 SIZE_ARRAY);
       }
 
-      // if (doc["wifi_client"].is<JsonVariant>())
-      // {
-      //   JsonArray wifiClientArray = doc["wifi_client"];
-
-      //   for (uint8_t i = 0; i < WIFI_CLIENTS; i++)
-      //   {
-      //     JsonArray wifiArray = wifiClientArray[i];          
-      //     //serializeJson(wifiArray, Serial);
-      //     //Serial.println("");
-          
-      //     strlcpy(ssid[i], wifiArray[0], SIZE_ARRAY);
-      //     strlcpy(password[i], wifiArray[1], SIZE_ARRAY);
-      //     active[i]= wifiArray[2];
-
-      //     //serializeJson(wifiArray[0], Serial);
-      //     //Serial.println("");
-      //     //Serial.println(ssid[i]);
-      //   }
-      // }
-
-      if (doc["wifi_client_2"].is<JsonVariant>())
+      if (doc["wifiConnectDelay"].is<JsonVariant>())
       {
-        JsonArray wifiClientArray2 = doc["wifi_client_2"];
-        // serializeJson(wifiClientArray2, Serial);
+        wifiConnectDelay=doc["wifiConnectDelay"];
+      }
+
+      if (doc["wifi_clients"].is<JsonVariant>())
+      {
+        JsonArray wifiClientArray = doc["wifi_clients"];
+        // serializeJson(wifiClientArray, Serial);
         // Serial.println("");
 
         for (uint8_t i = 0; i < WIFI_CLIENTS; i++)
         {
-          if (wifiClientArray2[i]["ssid"].is<JsonVariant>())
+          if (wifiClientArray[i]["ssid"].is<JsonVariant>())
           {
-            strlcpy(ssid[i], wifiClientArray2[i]["ssid"], SIZE_ARRAY);
-            strlcpy(password[i], wifiClientArray2[i]["password"], SIZE_ARRAY);
-            // copyArray(wifiClientArray2[i]["ssid"], ssid[i]);
-            // copyArray(wifiClientArray2[i]["password"], password[i]);
-            active[i]= wifiClientArray2[i]["active"];
+            strlcpy(ssid[i], wifiClientArray[i]["ssid"], SIZE_ARRAY);
+            strlcpy(password[i], wifiClientArray[i]["password"], SIZE_ARRAY);
+            // copyArray(wifiClientArray[i]["ssid"], ssid[i]);
+            // copyArray(wifiClientArray[i]["password"], password[i]);
+            active[i]= wifiClientArray[i]["active"];
             
-            // serializeJson(wifiClientArray2[i]["ssid"] , Serial);
+            // serializeJson(wifiClientArray[i]["ssid"] , Serial);
             // Serial.println("");
           }
         }
+
+        wifiClientArray.clear();
       }
     }
+
+    doc.clear();
 
     // Close the file (File's destructor doesn't close the file)
     file.close();
   }
-;

@@ -1,6 +1,12 @@
 {
-"wifi_client":[["HOULALA_1","tototutu",1],["","pipololo",1],["MYDEBUG","aqwzsx789*",1],["HOULALA_4","azerty123",0],["","",0]],
-"wifi_client_2":[{"ssid":"HOULALA_1","password":"tototutu","active":1},{"ssid":"HOULALA_2","password":"pipololo","active":1},{"ssid":"HOULALA_3","password":"azerty123","active":0}],
+"wifi_clients":[
+    {"ssid":"SSID_1","password":"password1","active":1},
+    {"ssid":"SSID_2","password":"password2","active":1},
+    {"ssid":"SSID_3","password":"password3","active":0},
+    {"ssid":"SSID_4","password":"password4","active":0},
+    {"ssid":"SSID_5","password":"password5","active":0}
+],
+"wifiConnectDelay":10,
 "apName":"VUMETRE_1",
 "apPassword": "",
 "apIP":[192,168,1,1],
