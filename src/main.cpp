@@ -60,7 +60,6 @@ void setup()
   // FASTLED
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   FastLED.setBrightness(100);
-
   
   // READ WIFI CONFIG
   mountFS();
@@ -71,17 +70,17 @@ void setup()
   // LOOP TO WIFI CLIENT
   // WIFI CLIENT
   Serial.println(F(""));
-  Serial.println(F("connecting WiFi"));
+  Serial.println(F("connecting to wifi as client"));
 
   for (uint8_t i = 0; i < WIFI_CLIENTS; i++)
   {
-    Serial.print("ssid: ");
-    Serial.println(ssid[i]);
-
     if (active[i]==1 && strlen(ssid[i])>0)
     {
       if (WiFi.status() != WL_CONNECTED)
       {
+        Serial.print(F("ssid: "));
+        Serial.println(ssid[i]);
+        
         WiFi.disconnect(true);
         wifiFlag = true;
         WiFi.begin(ssid[i], password[i]);
@@ -99,12 +98,12 @@ void setup()
           }
         }
       }
-      Serial.println(" ");
+      Serial.println(F(" "));
       if (WiFi.status() == WL_CONNECTED)
       {
-        Serial.print("connected to ");
+        Serial.print(F("connected to "));
         Serial.println(ssid[i]);
-        Serial.print("IP address: ");
+        Serial.print(F("IP address: "));
         Serial.println(WiFi.localIP());
       }
     }    
@@ -114,7 +113,7 @@ void setup()
   // WIFI AP MODE
   if (WiFi.status() != WL_CONNECTED)
   {
-    Serial.print("failed to connect to wifi as client, creating a wifi AP: ");
+    Serial.print(F("failed to connect to wifi as client, creating a wifi AP: "));
     Serial.println(apName);
     // check apName correct
     // check apPassword >= 8
@@ -145,7 +144,7 @@ void setup()
   previousMillisHB = millis();
   intervalHB = 500;
 
-  Serial.println("START !!!");
+  Serial.println(F("START !!!"));
 }
 
 void loop()
@@ -164,11 +163,11 @@ void loop()
 
     if (indexLed == 0)
     {
-      Serial.println(".");
+      Serial.println(F("."));
     }
     else
     {
-      Serial.print(".");
+      Serial.print(F("."));
     }
   }
 }
