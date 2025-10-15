@@ -1,8 +1,3 @@
-/*
-1/ si aucune infos, il crée un AP wifi par defaut
-2/
-*/
-
 #include <Arduino.h>
 #include <IPAddress.h>
 
@@ -32,6 +27,7 @@ JsonDocument doc;
 #include <FastLED.h>
 #define NUM_LEDS 8
 #define DATA_PIN D4
+bool ledState = true;
 
 CRGB leds[NUM_LEDS];
 uint8_t indexLed = 0;
@@ -60,6 +56,8 @@ void setup()
   // FASTLED
   FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
   FastLED.setBrightness(100);
+  FastLED.clear();
+  FastLED.show();
   
   // READ WIFI CONFIG
   mountFS();
@@ -68,7 +66,6 @@ void setup()
   readNetworkConfig("/config/networkconfig.json");
 
   // LOOP TO WIFI CLIENT
-  // WIFI CLIENT
   Serial.println(F(""));
   Serial.println(F("connecting to wifi as client"));
 
@@ -85,11 +82,24 @@ void setup()
         wifiFlag = true;
         WiFi.begin(ssid[i], password[i]);
 
+        FastLED.clear();
         // Loop continuously while WiFi is not connected
         while ( (WiFi.status() != WL_CONNECTED) && (wifiFlag) )
         {
           delay(100);
           Serial.print("/");
+          
+          if (ledState)
+          {
+            leds[i%NUM_LEDS] = CRGB::Blue;
+          }
+          else
+          {
+            leds[i%NUM_LEDS] = CRGB::Black;
+          }
+          FastLED.show();
+          ledState = !ledState;
+          
 
           if (millis() - previousMillisHB > (wifiConnectDelay*1000) )
           {
@@ -115,11 +125,6 @@ void setup()
   {
     Serial.print(F("failed to connect to wifi as client, creating a wifi AP: "));
     Serial.println(apName);
-    // check apName correct
-    // check apPassword >= 8
-    // add check IP correcte sinon
-    // IPAddress apIP(10,20,30,1);
-    // IPAddress apNetMsk(255,255,0,0);
 
     // WiFi.mode(WIFI_AP_STA);
     WiFi.mode(WIFI_AP);
@@ -256,7 +261,7 @@ void mountFS()
     else
     {
       // Copy values from the JsonObject to the Config
-      // wifi ssid list
+      // parse wifi ssid list
       if (doc["wifiClientsList"].is<JsonVariant>())
       {
         JsonArray wifiClientArray = doc["wifiClientsList"];
@@ -278,7 +283,7 @@ void mountFS()
         wifiClientArray.clear();
       }
 
-      // wifi AP config
+      // parse wifi AP config
       if (doc["wifiAPConfig"]["apIP"].is<JsonVariant>())
       {
         JsonArray apIPArray = doc["wifiAPConfig"]["apIP"];
