@@ -294,14 +294,14 @@ void mountFS()
                 SIZE_ARRAY);
       }
 
-      if (doc["wifiConnectDelay"].is<unsigned short>())
-      {
-        wifiConnectDelay=doc["wifiConnectDelay"];
-      }
-
       if (doc["wifiClientsList"].is<JsonVariant>())
       {
         JsonArray wifiClientArray = doc["wifiClientsList"];
+
+        if (wifiClientArray[5]["wifiConnectDelay"].is<unsigned short>())
+        {
+          wifiConnectDelay=wifiClientArray[5]["wifiConnectDelay"];
+        }
 
         for (uint8_t i = 0; i < WIFI_CLIENTS; i++)
         {
