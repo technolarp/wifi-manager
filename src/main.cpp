@@ -256,44 +256,7 @@ void mountFS()
     else
     {
       // Copy values from the JsonObject to the Config
-      if (doc["apIP"].is<JsonVariant>())
-      {
-        JsonArray apIPArray = doc["apIP"];
-
-        apIP[0] = apIPArray[0];
-        apIP[1] = apIPArray[1];
-        apIP[2] = apIPArray[2];
-        apIP[3] = apIPArray[3];
-
-        apIPArray.clear();
-      }
-
-      if (doc["apNetMsk"].is<JsonVariant>())
-      {
-        JsonArray apNetMskArray = doc["apNetMsk"];
-
-        apNetMsk[0] = apNetMskArray[0];
-        apNetMsk[1] = apNetMskArray[1];
-        apNetMsk[2] = apNetMskArray[2];
-        apNetMsk[3] = apNetMskArray[3];
-
-        apNetMskArray.clear();
-      }
-
-      if (doc["apName"].is<JsonVariant>())
-      {
-        strlcpy(apName,
-                doc["apName"],
-                SIZE_ARRAY);
-      }
-
-      if (doc["apPassword"].is<JsonVariant>())
-      {
-        strlcpy(apPassword,
-                doc["apPassword"],
-                SIZE_ARRAY);
-      }
-
+      // wifi ssid list
       if (doc["wifiClientsList"].is<JsonVariant>())
       {
         JsonArray wifiClientArray = doc["wifiClientsList"];
@@ -313,6 +276,64 @@ void mountFS()
           }
         }
         wifiClientArray.clear();
+      }
+
+      // wifi AP config
+      if (doc["wifiAPConfig"]["apIP"].is<JsonVariant>())
+      {
+        JsonArray apIPArray = doc["wifiAPConfig"]["apIP"];
+
+        for (uint8_t i = 0; i < 4; i++)
+        {
+          apIP[i] = apIPArray[i];
+        }
+
+        apIPArray.clear();
+      }
+
+      if (doc["wifiAPConfig"]["apNetMsk"].is<JsonVariant>())
+      {
+        JsonArray apNetMskArray = doc["wifiAPConfig"]["apNetMsk"];
+
+        for (uint8_t i = 0; i < 4; i++)
+        {
+          apNetMsk[i] = apNetMskArray[i];
+        }
+
+        apNetMskArray.clear();
+      }
+
+      if (doc["wifiAPConfig"]["apName"].is<JsonVariant>())
+      {
+        strlcpy(apName,
+                doc["wifiAPConfig"]["apName"],
+                SIZE_ARRAY);
+      }
+
+      if (doc["wifiAPConfig"]["apPassword"].is<JsonVariant>())
+      {
+        strlcpy(apPassword,
+                doc["wifiAPConfig"]["apPassword"],
+                SIZE_ARRAY);
+      }
+
+      // create default config 
+      if (strlen(apName) == 0)
+      {
+        Serial.println(F("no apName in config, creating default"));
+
+        snprintf(apName, SIZE_ARRAY, "TECHNOLARP_%04d", (ESP.getChipId() & 0xFFFF));
+        strlcpy(apPassword, "", SIZE_ARRAY);
+        
+        apIP[0] = 192;
+        apIP[1] = 168;
+        apIP[2] = 1;
+        apIP[3] = 1;
+
+        apNetMsk[0] = 255;
+        apNetMsk[1] = 255;
+        apNetMsk[2] = 255;
+        apNetMsk[3] = 0;
       }
     }
     doc.clear();
