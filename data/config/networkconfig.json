@@ -1,12 +1,16 @@
 {
-"wifiClientsList":[
+"wifiClientsConfig":{
+    "wifiClientsList":[
     {"ssid":"SSID_1","password":"password1","active":1},
     {"ssid":"SSID_2","password":"password2","active":1},
     {"ssid":"SSID_3","password":"password3","active":1},
     {"ssid":"SSID_4","password":"password4","active":0},
-    {"ssid":"SSID_5","password":"password5","active":0},
-    {"wifiConnectDelay":5}
+    {"ssid":"SSID_5","password":"password5","active":1}
     ],
+    "wifiConnectDelay":7,
+    "disableSsid":1,
+    "rebootEsp":0
+},
 "wifiAPConfig":{
     "apName":"VUMETRE",
     "apPassword": "",

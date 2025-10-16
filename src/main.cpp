@@ -19,6 +19,9 @@ char ssid[WIFI_CLIENTS][SIZE_ARRAY];
 char password[WIFI_CLIENTS][SIZE_ARRAY];
 bool active[WIFI_CLIENTS];
 
+bool disableSsid = false;
+bool rebootEsp = false;
+
 // ARDUINOJSON
 #include <ArduinoJson.h>
 JsonDocument doc;
@@ -45,6 +48,7 @@ void mountFS();
 void printJsonFile(const char *filename);
 void listDir(const char *dirname);
 void readNetworkConfig(const char *filename);
+void writeNetworkConfig(const char *filename);
 
 void setup()
 {
@@ -64,6 +68,8 @@ void setup()
   listDir("/config");
   printJsonFile("/config/networkconfig.json");
   readNetworkConfig("/config/networkconfig.json");
+
+  
 
   // LOOP TO WIFI CLIENT
   Serial.println(F(""));
@@ -108,6 +114,7 @@ void setup()
           }
         }
       }
+
       Serial.println(F(" "));
       if (WiFi.status() == WL_CONNECTED)
       {
@@ -115,6 +122,22 @@ void setup()
         Serial.println(ssid[i]);
         Serial.print(F("IP address: "));
         Serial.println(WiFi.localIP());
+      }
+      else
+      {
+        if (disableSsid)
+        {
+          Serial.print(F("disable this ssid: "));
+          Serial.println(ssid[i]);
+          active[i]=0;
+          writeNetworkConfig("/config/networkconfig.json");
+        }
+        if (rebootEsp)
+        {
+          Serial.println(F("reboot"));
+          delay(1000);
+          ESP.restart();
+        }        
       }
     }    
   }
@@ -262,14 +285,9 @@ void mountFS()
     {
       // Copy values from the JsonObject to the Config
       // parse wifi ssid list
-      if (doc["wifiClientsList"].is<JsonVariant>())
+      if (doc["wifiClientsConfig"]["wifiClientsList"].is<JsonVariant>())
       {
-        JsonArray wifiClientArray = doc["wifiClientsList"];
-
-        if (wifiClientArray[5]["wifiConnectDelay"].is<unsigned short>())
-        {
-          wifiConnectDelay=wifiClientArray[5]["wifiConnectDelay"];
-        }
+        JsonArray wifiClientArray = doc["wifiClientsConfig"]["wifiClientsList"];
 
         for (uint8_t i = 0; i < WIFI_CLIENTS; i++)
         {
@@ -280,7 +298,23 @@ void mountFS()
             active[i]= wifiClientArray[i]["active"].as<boolean>();
           }
         }
+
         wifiClientArray.clear();
+      }
+
+      if (doc["wifiClientsConfig"]["wifiConnectDelay"].is<unsigned short>())
+      {
+        wifiConnectDelay=doc["wifiClientsConfig"]["wifiConnectDelay"];
+      }
+
+      if (doc["wifiClientsConfig"]["disableSsid"].is<unsigned short>())
+      {
+        disableSsid=doc["wifiClientsConfig"]["disableSsid"].as<boolean>();
+      }
+
+      if (doc["wifiClientsConfig"]["rebootEsp"].is<unsigned short>())
+      {
+        rebootEsp=doc["wifiClientsConfig"]["rebootEsp"].as<boolean>();
       }
 
       // parse wifi AP config
@@ -345,4 +379,64 @@ void mountFS()
 
     // Close the file
     file.close();
+  }
+
+  void writeNetworkConfig(const char *filename)
+  {
+    // Open file for writing
+    // File file = LittleFS.open(filename, "w");
+    // if (!file)
+    // {
+    //   Serial.println(F("Failed to create file"));
+    //   return;
+    // }
+
+    // Allocate a temporary JsonDocument
+    JsonDocument doc;
+
+    JsonArray arraySsid = doc["wifiClientsConfig"]["wifiClientsConfig"].to<JsonArray>();
+    for (uint8_t i = 0; i < WIFI_CLIENTS; i++)
+    {
+      JsonDocument docSsid;
+      docSsid["ssid"] = ssid[i];
+      docSsid["password"] = password[i];
+      docSsid["active"] = active[i];
+
+      arraySsid.add(docSsid);
+    }
+
+    doc["wifiClientsConfig"]["wifiConnectDelay"] = wifiConnectDelay;
+    doc["wifiClientsConfig"]["disableSsid"] = disableSsid;
+    doc["wifiClientsConfig"]["rebootEsp"] = rebootEsp;
+    
+    doc["wifiAPConfig"]["apName"] = apName;
+    doc["wifiAPConfig"]["apPassword"] = apPassword;
+
+    JsonArray arrayIp = doc["wifiAPConfig"]["apIP"].to<JsonArray>();
+    for (uint8_t i = 0; i < 4; i++)
+    {
+      arrayIp.add(apIP[i]);
+    }
+
+    JsonArray arrayNetMask = doc["wifiAPConfig"]["apNetMsk"].to<JsonArray>();
+    for (uint8_t i = 0; i < 4; i++)
+    {
+      arrayNetMask.add(apNetMsk[i]);
+    }
+
+    Serial.println("doc json");
+    serializeJson(doc, Serial);
+    Serial.println();
+
+    // Delete existing file, otherwise the configuration is appended to the file
+    // LittleFS.remove(filename);
+
+    // Serialize JSON to file
+    // if (serializeJson(doc, file) == 0)
+    // {
+    //   Serial.println(F("Failed to write to file"));
+    // }
+
+    // // Close the file (File's destructor doesn't close the file)
+    // file.close();
   }
