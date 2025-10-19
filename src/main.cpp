@@ -1,5 +1,12 @@
 #include <Arduino.h>
+
+
+// ASYNCWEBSERVER
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <IPAddress.h>
+
+AsyncWebServer server(80);
 
 // LITTLEFS
 #include <LittleFS.h>
@@ -49,6 +56,7 @@ void printJsonFile(const char *filename);
 void listDir(const char *dirname);
 void readNetworkConfig(const char *filename);
 void writeNetworkConfig(const char *filename);
+void defaultAPConfig();
 
 void setup()
 {
@@ -166,6 +174,13 @@ void setup()
     Serial.println(WiFi.softAPIP());
   }
 
+  // ASYNC WEBSERVER
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(200, "text/plain", "Hello, world");
+  });
+
+  server.begin();
+
   // HEARTBEAT
   previousMillisHB = millis();
   intervalHB = 500;
@@ -278,6 +293,9 @@ void mountFS()
     {
       Serial.println(F("Failed to deserialize file in read network "));
       Serial.println(error.c_str());
+
+      Serial.println(F("Create default AP config"));
+      defaultAPConfig();
     }
     else
     {
@@ -354,23 +372,11 @@ void mountFS()
                 SIZE_ARRAY);
       }
 
-      // create default config 
+      // check AP config & create default config 
       if (strlen(apName) == 0)
       {
         Serial.println(F("no apName in config, creating default"));
-
-        snprintf(apName, SIZE_ARRAY, "TECHNOLARP_%04d", (ESP.getChipId() & 0xFFFF));
-        strlcpy(apPassword, "", SIZE_ARRAY);
-        
-        apIP[0] = 192;
-        apIP[1] = 168;
-        apIP[2] = 1;
-        apIP[3] = 1;
-
-        apNetMsk[0] = 255;
-        apNetMsk[1] = 255;
-        apNetMsk[2] = 255;
-        apNetMsk[3] = 0;
+        defaultAPConfig();
       }
     }
     doc.clear();
@@ -437,4 +443,21 @@ void mountFS()
 
     // Close the file (File's destructor doesn't close the file)
     file.close();
+  }
+
+  void defaultAPConfig()
+  {
+    // default AP config
+    apIP[0] = 192;
+    apIP[1] = 168;
+    apIP[2] = 1;
+    apIP[3] = 1;
+
+    apNetMsk[0] = 255;
+    apNetMsk[1] = 255;
+    apNetMsk[2] = 255;
+    apNetMsk[3] = 0;
+
+    snprintf(apName, SIZE_ARRAY, "TECHNOLARP_%04d", (ESP.getChipId() & 0xFFFF));
+    strlcpy(apPassword, "", SIZE_ARRAY);
   }
