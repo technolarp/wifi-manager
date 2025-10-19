@@ -1,5 +1,12 @@
 #include <Arduino.h>
+
+
+// ASYNCWEBSERVER
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 #include <IPAddress.h>
+
+AsyncWebServer server(80);
 
 // LITTLEFS
 #include <LittleFS.h>
@@ -166,6 +173,13 @@ void setup()
     Serial.print(F("softAPIP: "));
     Serial.println(WiFi.softAPIP());
   }
+
+  // ASYNC WEBSERVER
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(200, "text/plain", "Hello, world");
+  });
+
+  server.begin();
 
   // HEARTBEAT
   previousMillisHB = millis();
